@@ -14,7 +14,7 @@ async registration (req, res) {
   validate.validateEmail(email);
   validate.validatePassword(password);
     const userData = await authService.registration(email, password);
-    res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true})
+    res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true, secure: true})
     return res.json(userData)
   } catch(e) {
     if (e instanceof ApiError) {
@@ -33,7 +33,7 @@ async login (req, res) {
     validate.validateEmail(email);
     validate.validatePassword(password);
     const userData = await authService.login(email, password)
-    res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true})
+    res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true, secure: true})
     return res.json(userData)
 } catch (e) {
     if (e instanceof ApiError) {
@@ -74,7 +74,7 @@ async refresh (req, res) {
     throw ApiError.BadRequest('Refresh token is required');
   }
   const userData = await authService.refresh(refreshToken)
-  res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true})
+  res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true, secure: true})
   return res.json(userData)
 } catch (e) {
   if (e instanceof ApiError) {
