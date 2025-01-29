@@ -1,7 +1,4 @@
 const admin = require('firebase-admin');
-const bcrypt = require('bcrypt');
-const UserDto = require('../dto/user-dto');
-const tokenService = require('../token/tokenService');
 const ApiError = require('../error/ApiError');
 const uuid = require('uuid');
 
@@ -11,115 +8,86 @@ class CoreService {
 
   async registration (email, password) {
     try {
-      const user = admin.firestore().collection('users').where('email', '=', email);
-      const snapshot = await user.get();
-      if (!snapshot.empty) {
-          throw ApiError.BadRequest(`A user with the email address ${email} already exists`);
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const id = uuid.v4()
-      const newUser = {
-          email,
-          password: hashedPassword,
-          id
-      };
-
-      const userDocRef = await admin.firestore().collection('users').doc(id).set(newUser);
-      const userDto = new UserDto({ email, id });
-      const refreshToken = tokenService.generateTokens({ ...userDto });
-
-      await tokenService.saveToken(userDto.id, refreshToken);
-
-      return {
-          refreshToken,
-          userDto: userDto
-      };
-  } catch (e) {
-      if (e instanceof ApiError) {
-          throw e;
+      const userRecord = await admin.auth().createUser({ 
+        email,
+        password,
+      });
+      return { uid: userRecord.uid, email: userRecord.email };
+    } catch (e) {
+      console.error("Error during registration:", e);
+      
+      if (e.code === 'auth/email-already-exists') {
+        throw ApiError.BadRequest('Email already in use.');
+      } else if (e.code === 'auth/weak-password') {
+        throw ApiError.BadRequest('Password is too weak.');
       }
       throw ApiError.InternalError('Internal server error. Please try again later.');
+    }
+  }
+
+async registerWithGoogle(idToken) {
+  try {
+    const remoteConfig = admin.remoteConfig();
+    const template = await remoteConfig.getTemplate();
+    const apiKey = template.parameters['API_KEY'] ? template.parameters['API_KEY'].defaultValue.value : null;
+
+    if (!apiKey) {
+      throw ApiError.BadRequest('API_KEY is not set in Remote Config');
+    }
+
+    const response = await axios.post(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${apiKey}`,
+      {
+        postBody: `id_token=${idToken}&providerId=google.com`,
+        requestUri: "http://localhost",
+        returnIdpCredential: true,
+        returnSecureToken: true,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw new ApiError(400, error.response?.data?.error?.message || 'Google registration failed');
   }
 }
 
 
-
-  async login (email, password) {
-    try {
-      const user = admin.firestore().collection('users').where('email', '=', email)
-      const snapshot = await user.get();
-    
-      if (snapshot.empty) {
-        throw ApiError.BadRequest(`A user with the email address ${email} is not registered yet`);
-      }
-    
-      const userDoc = snapshot.docs[0]; 
-      const userData = userDoc.data();
-    
-      const isPassValid = await bcrypt.compare(password, userData.password);
-      if (!isPassValid) {
-        throw ApiError.BadRequest('Incorrect password');
-      }
-    
-      const userDto = new UserDto({ ...userData, id: userDoc.id }); 
-      const refreshToken = tokenService.generateTokens({ ...userDto });
-      await tokenService.saveToken(userDto.id, refreshToken)
-    
-      return {
-        refreshToken, 
-        userDto: userDto
-            }
-    } catch (error) {
-      console.error(error);
-      throw ApiError.InternalError('Internal server error. Please try again later.');
+async grantUserAccess (uid, privileges) {
+  try {
+    if (privileges !== 'roasters' && privileges !== 'cafe') {
+      throw ApiError.BadRequest('Invalid privileges. User must have either "roasters" or "cafe" privileges.');
     }
-  }
-  
-  async logout (refreshToken) {
-    const token = await tokenService.removeToken(refreshToken)
-    return token
-  }
-
-
-
-  async refresh(token) {
+    let userRecord;
     try {
-      const tokenRef = admin.firestore().collection('tokens').where('refreshToken', '==', token);
-      const tokenFromDb = await tokenRef.get();
-      const validToken = tokenService.validateRefreshToken(token);
-      if (tokenFromDb.empty || !validToken) {
-        throw ApiError.UnauthorizedError('Invalid or missing refresh token');
-      }
-  
-
-      const tokenData = tokenFromDb.docs[0].data();
-      console.log('Token found:', tokenData);
-      const userRef = admin.firestore().collection('users').doc(tokenData.userId);
-      const userDoc = await userRef.get();
-
-      if (!userDoc.exists) {
-        throw ApiError.BadRequest('User not found');
-      }
-  
-      const userData = userDoc.data();
-      console.log('User found:', userData);
-  
-      const userDto = new UserDto(userData);
-      const refreshToken = tokenService.generateTokens({ ...userDto });
-      await tokenService.saveToken(userDto.id, refreshToken)
-  
-      return {
-        refreshToken,
-        user: userDto,
-        
-      };
+      userRecord = await admin.auth().getUser(uid);
     } catch (error) {
-      console.error('Error refreshing token:', error);
-      throw ApiError.InternalError('Failed to refresh token');
+      throw ApiError.BadRequest('User not found.');
     }
+    const userRef = admin.firestore().collection(privileges).doc(uid);
+    const userDoc = await userRef.get();
+    if (userDoc.exists) {
+      throw ApiError.BadRequest('User is already registered with these privileges.');
+    }
+    const otherCollection = privileges === 'roasters' ? 'cafe' : 'roasters';
+    const otherRef = admin.firestore().collection(otherCollection).doc(uid);
+    const otherDoc = await otherRef.get();
+    if (otherDoc.exists) {
+      throw ApiError.BadRequest('User is already registered with different privileges.');
+    }
+    await userRef.set({
+      uid: userRecord.uid,
+      email: userRecord.email,
+      privileges: privileges,
+    });
+    return { uid: userRecord.uid, email: userRecord.email, privileges: privileges};
+  } catch (e) {
+    if (e instanceof ApiError) {
+      throw e;
+    }
+    throw ApiError.InternalError('Internal server error. Please try again later.');
   }
-  
+}
+
+
 
   
 }
