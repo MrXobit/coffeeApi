@@ -39,7 +39,7 @@ async registerWithGoogle(idToken) {
       `https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${apiKey}`,
       {
         postBody: `id_token=${idToken}&providerId=google.com`,
-        requestUri: "http://localhost",
+        requestUri: "https://us-central1-coffee-bee.cloudfunctions.net/registerWithGoogle",
         returnIdpCredential: true,
         returnSecureToken: true,
       }

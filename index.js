@@ -18,7 +18,7 @@ exports.grantUserAccess = onRequest((req, res) => {
     return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
   }
 
-  logger.info('Handling registration...', { structuredData: true });
+  logger.info('Handling user access grant...', { structuredData: true });
   return authController.grantUserAccess(req, res);
 });
 
