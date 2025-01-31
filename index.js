@@ -32,5 +32,45 @@ exports.registerWithGoogle = onRequest((req, res) => {
   return authController.registerWithGoogle(req, res);
 });
 
+exports.resetPasswordEmail = onRequest((req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+  }
+
+  logger.info('Handling password reset request...', { structuredData: true });
+  return authController.resetPasswordEmail(req, res);
+});
+
+
+exports.resetpasswordLink = onRequest((req, res) => {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+  }
+
+  logger.info('Handling password reset link request...', { structuredData: true });
+  return authController.resetpasswordLink(req, res);
+});
+
+
+exports.resetPasswordFinal = onRequest((req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+  }
+
+  logger.info('Handling password reset link request...', { structuredData: true });
+  return authController.resetPasswordFinal(req, res);
+});
+
+
+exports.logout = onRequest((req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+  }
+
+  logger.info('Handling user logout request...', { structuredData: true });
+  return authController.logout(req, res);
+});
+
+
 
 

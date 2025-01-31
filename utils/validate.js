@@ -2,7 +2,8 @@ const ApiError = require("../error/ApiError");
 
 class Validate {
 
-validateEmail(email) {
+
+    validateEmail(email) {
         try {
             if (typeof email !== 'string') {
                 throw ApiError.BadRequest('Email must be a string');
@@ -15,7 +16,7 @@ validateEmail(email) {
                 throw ApiError.BadRequest('Email is too long');
             }
             return true;
-        }  catch (e) {
+        } catch (e) {
             if (e instanceof ApiError) {
                 throw e;
             }
@@ -28,15 +29,11 @@ validateEmail(email) {
             if (typeof password !== 'string') {
                 throw ApiError.BadRequest('Password must be a string');
             }
-            if (password.length < 8) {
-                throw ApiError.BadRequest('Password must be at least 8 characters long');
+            if (password.length < 6) {  
+                throw ApiError.BadRequest('Password must be at least 6 characters long');
             }
-            if (password.length > 128) {
-                throw ApiError.BadRequest('Password is too long');
-            }
-            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,128}$/;
-            if (!passwordRegex.test(password)) {
-                throw ApiError.BadRequest('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
+            if (password.length > 60) {
+                throw ApiError.BadRequest('Password must not exceed 60 characters');
             }
             return true;
         } catch (e) {
