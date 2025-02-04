@@ -3,6 +3,7 @@ initializeFirebase();
 const { onRequest } = require('firebase-functions/v2/https');
 const logger = require('firebase-functions/logger');
 const authController = require('./AuthApp/authController');
+const dataController = require('./getData/dataController');
 
 exports.handleRegistrationRequest = onRequest((req, res) => {
   if (req.method !== 'POST') {
@@ -72,5 +73,42 @@ exports.logout = onRequest((req, res) => {
 });
 
 
+
+
+exports.getAllBeans = onRequest((req, res) => {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
+  }
+
+  logger.info("Handling getAllBeans request...", { structuredData: true });
+  return dataController.getAllBeans(req, res);
+});
+
+exports.getAllParameters = onRequest((req, res) => {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
+  }
+
+  logger.info("Handling getAllParameters request...", { structuredData: true });
+  return dataController.getAllParameters(req, res);
+});
+
+exports.getAllRoasters = onRequest((req, res) => {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
+  }
+
+  logger.info("Handling getAllRoasters request...", { structuredData: true });
+  return dataController.getAllRoasters(req, res);
+});
+
+exports.getAllUsersCoffeeLogs = onRequest((req, res) => {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
+  }
+
+  logger.info("Handling getAllUsersCoffeeLogs request...", { structuredData: true });
+  return dataController.getAllUsersCoffeeLogs(req, res);
+});
 
 
