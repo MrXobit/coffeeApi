@@ -4,6 +4,7 @@ const { onRequest } = require('firebase-functions/v2/https');
 const logger = require('firebase-functions/logger');
 const authController = require('./AuthApp/authController');
 const dataController = require('./getData/dataController');
+const addController = require('./addOrEdit/add-controller');
 
 exports.handleRegistrationRequest = onRequest((req, res) => {
   if (req.method !== 'POST') {
@@ -110,5 +111,18 @@ exports.getAllUsersCoffeeLogs = onRequest((req, res) => {
   logger.info("Handling getAllUsersCoffeeLogs request...", { structuredData: true });
   return dataController.getAllUsersCoffeeLogs(req, res);
 });
+
+
+
+exports.addNewRoaster = onRequest((req, res) => {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
+  }
+
+  logger.info("Handling addNewRoaster request...", { structuredData: true });
+  return addController.addNewRoaster(req, res);
+});
+
+
 
 
