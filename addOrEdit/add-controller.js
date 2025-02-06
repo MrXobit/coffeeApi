@@ -29,6 +29,25 @@ class AddController {
           }
     }
 
+
+    async addBeans (req, res) {
+        try {
+            const uid = await getUidFromToken(req);
+            if (!uid) {
+                return res.status(400).json({ error: 'Invalid UID' });
+            } 
+            
+        const {country, high, process, producer, roasterId, roasting, variety} = req.body
+        const BeansData = await addService.addBeans(country, high, process, producer, roasterId, roasting, variety);
+        return res.json(BeansData)
+        }  catch(e) {
+            if (e instanceof ApiError) {
+              return res.status(e.status).json({ message: e.message, errors: e.errors });
+            }
+            return res.status(500).json({ message: 'Internal server error. Please try again later.' });
+          }
+    
+    } 
 }
 
 module.exports = new AddController();

@@ -124,5 +124,14 @@ exports.addNewRoaster = onRequest((req, res) => {
 });
 
 
+exports.addBeans = onRequest((req, res) => {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
+  }
+
+  logger.info("Handling addBeans request...", { structuredData: true });
+  return addController.addBeans(req, res);
+});
+
 
 
