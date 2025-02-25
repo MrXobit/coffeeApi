@@ -37,26 +37,15 @@ async registerWithGoogle (req, res) {
 }
 
 
-async grantUserAccess (req, res) {
-  try {
-    const {uid} = req.body
-    const {privileges} = req.body  
-    const userData = await authService.grantUserAccess(uid, privileges);
-    return res.json(userData)
-  } catch(e) {
-    if (e instanceof ApiError) {
-      return res.status(e.status).json({ message: e.message, errors: e.errors });
-    }
-    return res.status(500).json({ message: 'Internal server error. Please try again later.' });
-  }
-}
 
-async logout (req, res) {
+
+
+async resetPasswordEmail(req, res) {
   try {
-    const {privileges, uid} = req.body  
-    const userData = await authService.logout(uid, privileges);
-    return res.json(userData)
-  } catch(e) {
+    const { email } = req.body;
+    const userData = await authService.resetPasswordEmail(email);
+    return res.json(userData);
+  } catch (e) {
     if (e instanceof ApiError) {
       return res.status(e.status).json({ message: e.message, errors: e.errors });
     }
@@ -65,30 +54,13 @@ async logout (req, res) {
 }
 
 
-
-
-async resetPasswordEmail (req, res) {
-    try {
-     const {email, privileges} = req.body
-     const userData = await authService.resetPasswordEmail(email, privileges);
-     return res.json(userData)
-    } catch(e) {
-      if (e instanceof ApiError) {
-        return res.status(e.status).json({ message: e.message, errors: e.errors });
-      }
-      return res.status(500).json({ message: 'Internal server error. Please try again later.' });
-    }
-}
-
-async resetpasswordLink (req, res) {
+async resetpasswordLink(req, res) {
   try {
-    const { resetPasswordLink } = req.query;
-    const { privileges } = req.query; 
+    const { resetPasswordLink } = req.query;  
     console.log('resetPasswordLink:', resetPasswordLink);
-    console.log('privileges:', privileges);
-    await authService.resetpasswordLink(resetPasswordLink, privileges)
-    return res.redirect(`https://www.youtube.com/`)
-  } catch(e) {
+    await authService.resetpasswordLink(resetPasswordLink);
+    return res.redirect(`https://www.youtube.com/`); 
+  } catch (e) {
     if (e instanceof ApiError) {
       return res.status(e.status).json({ message: e.message, errors: e.errors });
     }
@@ -96,21 +68,19 @@ async resetpasswordLink (req, res) {
   }
 }
 
-async resetPasswordFinal (req, res) {
+
+async resetPasswordFinal(req, res) {
   try {
-     const {password, uid, privileges} = req.body
-     const userData = await authService.resetPasswordFinal(password, uid, privileges);
-     return res.json(userData)
-  }  catch(e) {
+    const { password, uid } = req.body;
+    const userData = await authService.resetPasswordFinal(password, uid);
+    return res.json(userData);
+  } catch (e) {
     if (e instanceof ApiError) {
       return res.status(e.status).json({ message: e.message, errors: e.errors });
     }
     return res.status(500).json({ message: 'Internal server error. Please try again later.' });
   }
 }
-
-
-
 
 }
 module.exports = new authController();

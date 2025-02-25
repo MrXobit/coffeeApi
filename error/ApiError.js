@@ -16,6 +16,10 @@ class ApiError extends Error {
     static InternalError(message, errors = []) {
         return new ApiError(500, message, errors);
     }
+
+    static Forbidden(message, errors = []) {
+        return new ApiError(403, message, errors);
+    }
 }
 
 module.exports = ApiError;
