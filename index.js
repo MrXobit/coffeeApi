@@ -8,56 +8,114 @@ const addController = require('./addOrEdit/add-controller');
 const paymentsController = require('./payments/payments-controller');
 const AdminMainDataController = require('./admin/AdminMainData/AdminMainData-controller');
 const AccessController = require('./admin/accessСontrol/access-controller');
+const cors = require('cors')({ origin: true });
+const functions = require('firebase-functions'); 
 
-exports.handleRegistrationRequest = onRequest((req, res) => {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
-  }
 
-  logger.info('Handling registration...', { structuredData: true });
-  return authController.registration(req, res);
+// exports.handleRegistrationRequest = functions.https.onRequest((req, res) => {
+//   cors(req, res, () => {
+//     if (req.method !== 'POST') {
+//       return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+//     }
+
+//     logger.info('Handling registration...', { structuredData: true });
+//     return authController.registration(req, res);
+//   });
+// });
+
+// exports.checkAuth = functions.https.onRequest((req, res) => {
+//   cors(req, res, () => {
+//     if (req.method !== 'POST') {
+//       return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+//     }
+
+//     logger.info('Handling checkAuth...', { structuredData: true });
+//     return authController.checkAuth(req, res);
+//   });
+// });
+
+
+// exports.registerWithGoogle = onRequest((req, res) => {
+//   if (req.method !== 'POST') {
+//     return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+//   }
+
+//   logger.info('Handling user registration via Google...', { structuredData: true });
+//   return authController.registerWithGoogle(req, res);
+// });
+
+
+
+
+
+
+
+exports.resetPasswordEmail = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling password reset request...", { structuredData: true });
+    return authController.resetPasswordEmail(req, res);
+  });
+});
+
+exports.resetpasswordLink = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "GET") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
+    }
+
+    logger.info("Handling password reset link request...", { structuredData: true });
+    return authController.resetpasswordLink(req, res);
+  });
+});
+
+exports.resetPasswordFinal = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling password reset final request...", { structuredData: true });
+    return authController.resetPasswordFinal(req, res);
+  });
 });
 
 
 
 
-exports.registerWithGoogle = onRequest((req, res) => {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
-  }
-
-  logger.info('Handling user registration via Google...', { structuredData: true });
-  return authController.registerWithGoogle(req, res);
-});
-
-exports.resetPasswordEmail = onRequest((req, res) => {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
-  }
-
-  logger.info('Handling password reset request...', { structuredData: true });
-  return authController.resetPasswordEmail(req, res);
-});
 
 
-exports.resetpasswordLink = onRequest((req, res) => {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
-  }
+// exports.resetPasswordEmail = onRequest((req, res) => {
+//   if (req.method !== 'POST') {
+//     return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+//   }
 
-  logger.info('Handling password reset link request...', { structuredData: true });
-  return authController.resetpasswordLink(req, res);
-});
+//   logger.info('Handling password reset request...', { structuredData: true });
+//   return authController.resetPasswordEmail(req, res);
+// });
 
 
-exports.resetPasswordFinal = onRequest((req, res) => {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
-  }
+// exports.resetpasswordLink = onRequest((req, res) => {
+//   if (req.method !== 'GET') {
+//     return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+//   }
 
-  logger.info('Handling password reset link request...', { structuredData: true });
-  return authController.resetPasswordFinal(req, res);
-});
+//   logger.info('Handling password reset link request...', { structuredData: true });
+//   return authController.resetpasswordLink(req, res);
+// });
+
+
+// exports.resetPasswordFinal = onRequest((req, res) => {
+//   if (req.method !== 'POST') {
+//     return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+//   }
+
+//   logger.info('Handling password reset link request...', { structuredData: true });
+//   return authController.resetPasswordFinal(req, res);
+// });
 
 
 
@@ -80,14 +138,7 @@ exports.getAllParameters = onRequest((req, res) => {
   return dataController.getAllParameters(req, res);
 });
 
-exports.getAllRoasters = onRequest((req, res) => {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
-  }
 
-  logger.info("Handling getAllRoasters request...", { structuredData: true });
-  return dataController.getAllRoasters(req, res);
-});
 
 exports.getAllUsersCoffeeLogs = onRequest((req, res) => {
   if (req.method !== "GET") {
@@ -97,6 +148,8 @@ exports.getAllUsersCoffeeLogs = onRequest((req, res) => {
   logger.info("Handling getAllUsersCoffeeLogs request...", { structuredData: true });
   return dataController.getAllUsersCoffeeLogs(req, res);
 });
+
+
 
 
 
@@ -122,135 +175,215 @@ exports.addBeans = onRequest((req, res) => {
 
 
 
-
-exports.subscriptionsCreate = onRequest((req, res) => {
-  if (req.method !== "POST") {
+exports.subscriptionsCreate = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
       return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
-  }
+    }
 
-  logger.info("Handling subscriptionsCreate request...", { structuredData: true });
-  return paymentsController.subscriptionsCreate(req, res);
+    logger.info("Handling subscriptionsCreate request...", { structuredData: true });
+    return paymentsController.subscriptionsCreate(req, res);
+  });
 });
 
-
-exports.subscriptionsEdit = onRequest((req, res) => {
-  if (req.method !== "POST") {
+exports.subscriptionsEdit = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
       return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
-  }
+    }
 
-  logger.info("Handling subscriptionsEdit request...", { structuredData: true });
-  return paymentsController.subscriptionsEdit(req, res);
+    logger.info("Handling subscriptionsEdit request...", { structuredData: true });
+    return paymentsController.subscriptionsEdit(req, res);
+  });
 });
 
-
-exports.getSubscriptions = onRequest((req, res) => {
-  if (req.method !== "GET") {
-      return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
-  }
-
-  logger.info("Handling getSubscriptions request...", { structuredData: true });
-  return paymentsController.getSubscriptions(req, res);
-});
-
-exports.deleterSubscriptions = onRequest((req, res) => {
-  if (req.method !== "DELETE") {
-      return res.status(405).json({ error: "Метод не дозволений, використовуйте DELETE" });
-  }
-
-  logger.info("Handling deleterSubscriptions request...", { structuredData: true });
-  return paymentsController.deleterSubscriptions(req, res);
-});
-
-exports.paymentsPurchase = onRequest((req, res) => {
-  if (req.method !== "POST") {
+exports.deleterSubscriptions = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
       return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
-  }
+    }
 
-  logger.info("Handling paymentsPurchase request...", { structuredData: true });
-  return paymentsController.paymentsPurchase(req, res);
+    logger.info("Handling deleterSubscriptions request...", { structuredData: true });
+    return paymentsController.deleterSubscriptions(req, res);
+  });
 });
 
-exports.paymentsWebhook = onRequest((req, res) => {
-  if (req.method !== "POST") {
-      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
-  }
-
-  logger.info("Handling paymentsWebhook request...", { structuredData: true });
-  return paymentsController.paymentsWebhook(req, res);
-});
-
-exports.payoutsSend = onRequest((req, res) => {
-  if (req.method !== "POST") {
-      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
-  }
-
-  logger.info("Handling payoutsSend request...", { structuredData: true });
-  return paymentsController.payoutsSend(req, res);
-});
-
-exports.payoutsStatus = onRequest((req, res) => {
-  if (req.method !== "GET") {
+exports.getSubscriptions = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "GET") {
       return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
-  }
+    }
 
-  logger.info("Handling payoutsStatus request...", { structuredData: true });
-  return paymentsController.payoutsStatus(req, res);
+    logger.info("Handling getSubscriptions request...", { structuredData: true });
+    return paymentsController.getSubscriptions(req, res);
+  });
 });
 
 
 
 
 
-exports.updateName = onRequest((req, res) => {
-  if (req.method !== "POST") {
-      return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
-  }
 
-  logger.info("Handling updateName request...", { structuredData: true });
-  return AdminMainDataController.updateName(req, res);
+
+
+
+
+
+
+
+
+exports.paymentsPurchase = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+    }
+
+    logger.info('Handling paymentsPurchase request...', { structuredData: true });
+    return paymentsController.paymentsPurchase(req, res);
+  });
+});
+
+
+exports.paymentsWebhook = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+    }
+
+    logger.info('Handling paymentsWebhook request...', { structuredData: true });
+    return paymentsController.paymentsWebhook(req, res);
+  });
+});
+
+
+exports.payoutsSend = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+    }
+
+    logger.info('Handling payoutsSend request...', { structuredData: true });
+    return paymentsController.payoutsSend(req, res);
+  });
+});
+
+
+exports.payoutsStatus = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== 'GET') {
+      return res.status(405).json({ error: 'Метод не дозволений, використовуйте GET' });
+    }
+
+    logger.info('Handling payoutsStatus request...', { structuredData: true });
+    return paymentsController.payoutsStatus(req, res);
+  });
+});
+
+
+exports.pay = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+    }
+
+    logger.info('Handling pay request...', { structuredData: true });
+    return paymentsController.pay(req, res);
+  });
+});
+
+
+exports.payWebhook = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+    }
+
+    logger.info('Handling payWebhook request...', { structuredData: true });
+    return paymentsController.payWebhook(req, res);
+  });
+});
+
+exports.payWebhookDouble  = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+    }
+
+    logger.info('Handling payWebhookDouble  request...', { structuredData: true });
+    return paymentsController.payWebhookDouble(req, res);
+  });
 });
 
 
 
-exports.updateDescription = onRequest((req, res) => {
-  if (req.method !== "POST") {
-      return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
-  }
 
-  logger.info("Handling updateDescription request...", { structuredData: true });
-  return AdminMainDataController.updateDescription(req, res);
+
+
+
+
+
+
+
+
+
+exports.updateName = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+    }
+
+    logger.info('Handling updateName request...', { structuredData: true });
+    return AdminMainDataController.updateName(req, res);
+  });
 });
 
 
-exports.updateContacts = onRequest((req, res) => {
-  if (req.method !== "POST") {
-      return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
-  }
+exports.updateDescription = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+    }
 
-  logger.info("Handling updateContacts request...", { structuredData: true });
-  return AdminMainDataController.updateContacts(req, res);
+    logger.info('Handling updateDescription request...', { structuredData: true });
+    return AdminMainDataController.updateDescription(req, res);
+  });
+});
+
+
+exports.updateContacts = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+    }
+
+    logger.info('Handling updateContacts request...', { structuredData: true });
+    return AdminMainDataController.updateContacts(req, res);
+  });
 });
 
 
 
-exports.updateWorkingHours = onRequest((req, res) => {
-  if (req.method !== "POST") {
-      return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
-  }
+exports.updateWorkingHours = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+    }
 
-  logger.info("Handling updateWorkingHours request...", { structuredData: true });
-  return AdminMainDataController.updateWorkingHours(req, res);
+    logger.info('Handling updateWorkingHours request...', { structuredData: true });
+    return AdminMainDataController.updateWorkingHours(req, res);
+  });
 });
 
 
+exports.updateAddress = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Метод не дозволений, використовуйте POST' });
+    }
 
-exports.updateAddress = onRequest((req, res) => {
-  if (req.method !== "POST") {
-      return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
-  }
-
-  logger.info("Handling updateAddress request...", { structuredData: true });
-  return AdminMainDataController.updateAddress(req, res);
+    logger.info('Handling updateAddress request...', { structuredData: true });
+    return AdminMainDataController.updateAddress(req, res);
+  });
 });
 
 
@@ -283,3 +416,157 @@ exports.createCoffeeChain = onRequest((req, res) => {
   logger.info("Handling createCoffeeChain request...", { structuredData: true });
   return AccessController.createCoffeeChain(req, res);
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+exports.uploadImage = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling subscriptionsCreate request...", { structuredData: true });
+    return addController.uploadImage(req, res);
+  });
+});
+
+
+
+exports.createNewBean = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling subscriptionsCreate request...", { structuredData: true });
+    return addController.createNewBean(req, res);
+  });
+});
+
+
+
+exports.findBeans  = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling findBeans  request...", { structuredData: true });
+    return addController.findBeans (req, res);
+  });
+});
+
+
+exports.findRoaster  = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling findRoaster  request...", { structuredData: true });
+    return addController.findRoaster (req, res);
+  });
+});
+
+
+
+
+exports.superUser  = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling superUser request...", { structuredData: true });
+    return addController.superUser (req, res);
+  });
+});
+
+
+exports.getCafeDataByUrl  = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling getCafeDataByUrl request...", { structuredData: true });
+    return dataController.getCafeDataByUrl (req, res);
+  });
+});
+
+
+
+exports.getRoasterByInput  = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling getRoasterByInput request...", { structuredData: true });
+    return dataController.getRoasterByInput (req, res);
+  });
+});
+
+
+exports.getCoffeByInput  = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling getCoffeByInput request...", { structuredData: true });
+    return dataController.getCoffeByInput (req, res);
+  });
+});
+
+
+
+exports.getAllRoasters  = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling getAllRoasters request...", { structuredData: true });
+    return dataController.getAllRoasters (req, res);
+  });
+});
+
+
+exports.getAllCoffe  = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling getAllCoffe request...", { structuredData: true });
+    return dataController.getAllCoffe (req, res);
+  });
+});
+
+
+
+exports.validAccesAdmin = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling validAccesAdmin request...", { structuredData: true });
+    return dataController.validAccesAdmin (req, res);
+  });
+});
+

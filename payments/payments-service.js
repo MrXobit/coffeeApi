@@ -244,20 +244,33 @@ class PaymentsService {
     
     
 
-    async getSubscriptions(uid, count, offset) {
+    async getSubscriptions(uid, count, offset, cafeId) {
         try {
-            const userRef = admin.firestore().collection('cafe').doc(uid);
+            const userRef = admin.firestore().collection('users').doc(uid);
             const userDoc = await userRef.get();
-    
-          
+            
             if (!userDoc.exists) {
                 throw ApiError.BadRequest("User not found");
             }
     
+            const userData = userDoc.data();
     
-            let query = userRef.collection("coffee_pass");
+            const accessRef = admin.firestore().collection('accessAdmin').doc(userData.email);
+            const accessDoc = await accessRef.get();
+            
+            if (!accessDoc.exists) {
+                throw ApiError.BadRequest("Access denied");
+            }
     
-     
+            const cafeRef = admin.firestore().collection('cafe').doc(cafeId);
+            const cafeDoc = await cafeRef.get();
+            
+            if (!cafeDoc.exists) {
+                throw ApiError.BadRequest("Cafe not found");
+            }
+    
+            let query = cafeRef.collection("coffee_pass");
+    
             if (!isNaN(offset) && offset > 0) {
                 query = query.offset(offset);
             }
@@ -265,16 +278,14 @@ class PaymentsService {
                 query = query.limit(count);
             }
     
-            const userSubscriptionsSnapshot = await query.get();
+            const subscriptionsSnapshot = await query.get();
     
-       
-            if (userSubscriptionsSnapshot.empty) {
+            if (subscriptionsSnapshot.empty) {
                 return { message: "User has no subscriptions", data: [] };
             }
     
-     
             const subscriptions = [];
-            userSubscriptionsSnapshot.forEach(doc => {
+            subscriptionsSnapshot.forEach(doc => {
                 subscriptions.push({ id: doc.id, ...doc.data() });
             });
     
@@ -287,33 +298,50 @@ class PaymentsService {
             throw ApiError.InternalError('Internal server error. Please try again later.');
         }
     }
-
-    async deleterSubscriptions(uid, DeleterSubscriptionId) {
-
-        try {
-            const userRef = admin.firestore().collection('cafe').doc(uid);
-            const userDoc = await userRef.get();
     
-            if (!DeleterSubscriptionId) {
-                throw ApiError.BadRequest("DeleterSubscriptionId is required");
-            }
+      
 
+    async deleterSubscriptions(uid, deleterSubscriptionId, cafeId) {
+        try {
+            const userRef = admin.firestore().collection('users').doc(uid);
+            const userDoc = await userRef.get();
+            
             if (!userDoc.exists) {
                 throw ApiError.BadRequest("User not found");
             }
     
-            const subscriptionsDeleteRef = userRef.collection("coffee_pass").doc(DeleterSubscriptionId);
-            const subscriptionsDeleteDoc = await subscriptionsDeleteRef.get();
+            const userData = userDoc.data();
     
-
-            if (!subscriptionsDeleteDoc.exists) {
+            const accessRef = admin.firestore().collection('accessAdmin').doc(userData.email);
+            const accessDoc = await accessRef.get();
+            
+            if (!accessDoc.exists) {
+                throw ApiError.BadRequest("Access denied");
+            }
+            
+            const cafeRef = admin.firestore().collection('cafe').doc(cafeId);
+            const cafeDoc = await cafeRef.get();
+    
+            if (!deleterSubscriptionId) {
+                throw ApiError.BadRequest("deleterSubscriptionId is required");
+            }
+    
+            if (!cafeDoc.exists) {
+                throw ApiError.BadRequest("Cafe not found");
+            }
+    
+            const subscriptionRef = cafeRef.collection("coffee_pass").doc(deleterSubscriptionId);
+            const subscriptionDoc = await subscriptionRef.get();
+    
+            if (!subscriptionDoc.exists) {
                 throw ApiError.BadRequest("Subscription not found");
             }
-
-            await subscriptionsDeleteRef.delete();
     
-            return { message: "Subscription deleted successfully", data: subscriptionsDeleteDoc.data() };
+            await subscriptionRef.delete();
+    
+            return { message: "Subscription deleted successfully", data: subscriptionDoc.data() };
         } catch (e) {
+            console.log(e)
             if (e instanceof ApiError) {
                 throw e;
             }
@@ -367,10 +395,18 @@ class PaymentsService {
                         currency_code: currency,
                         value: amount.toFixed(2)
                     },
-                    payee: {
-                        email_address: seller_email 
-                    }
-                }]
+                    payee: { email_address: seller_email }
+                }],
+                application_context: {
+                    "brand_name": "Coffee Bee",
+                    "landing_page": "BILLING", // Сторінка після авторизації, наприклад, платіжна інформація
+                    "user_action": "PAY_NOW", // Прямо пропонувати оплату
+                    "return_url": "https://your-app.com/success", // URL після успішної оплати
+                    "cancel_url": "https://your-app.com/cancel", // URL при відміні оплати
+                    "payment_method_preference": "IMMEDIATE_PAYMENT_REQUIRED", // Необхідно платити одразу
+                    "payment_method_selected": "PAYPAL", // Вибір PayPal як методу оплати
+                    "allowed_payment_methods": "INSTANT_FUNDING_SOURCE" // Дозволити миттєві методи оплати (Google Pay, Apple Pay)
+                }
             }, {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
@@ -474,6 +510,93 @@ try {
     throw new ApiError(500, 'Ошибка проверки статуса выплаты');
 }
    }
+
+
+
+
+   async paymentsPurchaseWithCard(amount, currency, cardDetails, billingAddress, seller_email) {
+    try {
+        await paypalInitPromise;
+        
+        if (typeof amount !== 'number' || isNaN(amount) || amount <= 0) {
+            throw ApiError.BadRequest("Amount must be a valid number greater than 0.");
+        }
+
+        const allowedCurrencies = ['USD', 'EUR', 'GBP', 'AUD', 'BRL', 'CAD', 'CNY', 'CZK', 'DKK', 'HKD', 'HUF', 'ILS', 'JPY', 'MYR', 'MXN', 'TWD', 'NZD', 'NOK', 'PHP', 'PLN', 'SGD', 'SEK', 'CHF', 'THB'];
+        if (typeof currency !== 'string' || !allowedCurrencies.includes(currency)) {
+            throw ApiError.BadRequest("Invalid currency.");
+        }
+
+        const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+        if (typeof seller_email !== 'string' || !emailPattern.test(seller_email)) {
+            throw ApiError.BadRequest("Invalid email address.");
+        }
+
+        const accessToken = await this.getAccessToken();
+
+        // 1️⃣ Создаем заказ
+        const orderResponse = await axios.post(`${PAYPAL_API}/v2/checkout/orders`, {
+            intent: 'CAPTURE',
+            purchase_units: [{
+                amount: {
+                    currency_code: currency,
+                    value: amount.toFixed(2)
+                }
+            }],
+            payment_source: {
+                card: {
+                    number: cardDetails.number,
+                    expiry: cardDetails.expiry,
+                    security_code: cardDetails.cvv,
+                    name: cardDetails.name,
+                    billing_address: billingAddress
+                }
+            }
+        }, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const orderId = orderResponse.data.id;
+
+        // 2️⃣ Захватываем платёж (capture)
+        const captureResponse = await axios.post(`${PAYPAL_API}/v2/checkout/orders/${orderId}/capture`, {}, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!captureResponse.data.purchase_units || captureResponse.data.purchase_units.length === 0) {
+            throw new ApiError(500, 'Ошибка: PayPal не вернул данные о платеже');
+        }
+
+        const capture = captureResponse.data.purchase_units[0].payments.captures[0];
+        const totalAmount = parseFloat(capture.amount.value);
+        const currencyCode = capture.amount.currency_code;
+
+        // 3️⃣ Расчет выплат
+        const sellerAmount = totalAmount * 0.95;
+        const feeAmount = totalAmount * 0.05;
+
+        // 4️⃣ Выплата 5% нам
+        await this.payoutsSend('cbee.finance@gmail.com', feeAmount, currencyCode);
+
+        // 5️⃣ Выплата 95% продавцу
+        await this.payoutsSend(seller_email, sellerAmount, currencyCode);
+
+        return { order_id: orderId, status: 'COMPLETED' };
+    } catch (e) {
+        if (e instanceof ApiError) {
+            throw e;
+        }
+        throw ApiError.InternalError(e.message);
+    }
+}
+
+
 
 }
 

@@ -3,38 +3,35 @@ const ApiError = require('../../error/ApiError');
 const { popularSocialNetworks } = require('../utils/popularSocialNetworks');
 
 class AdminMainDataService {
-    async updateName(uid, name, cafeId) {
+    async updateName(uid, name, cafeId, isSuperAdmin) {
         try {
-          const userRef = admin.firestore().collection('users').doc(uid);
-          const userSnapshot = await userRef.get();
-          
-          if (!userSnapshot.exists) {
-              throw ApiError.BadRequest('User not found.');
-          }
-          const cafeRef = admin.firestore().collection('cafe').doc(cafeId);
-          const cafeSnapshot = await cafeRef.get();
-  
-       
-          if (!cafeSnapshot.exists) {
-              throw ApiError.BadRequest('Cafe not found.');
-          }
-          const userData = userSnapshot.data();
-          
-        if (userData.privileges !== 'admin') {
-            throw ApiError.Forbidden('Access denied. Admin privileges required.');
-        }
-  
-        const getaccess = admin.firestore().collection('accessAdmin').doc(userData.email)
-        const getaccessDoc = await getaccess.get()
-        if (!getaccessDoc.exists) {
-            throw ApiError.BadRequest('Access not granted');
-        }
-        const getaccessData = getaccessDoc.data()
-        const allowedCafeIds = getaccessData.allowedCafeIds || []; 
-
-        if (!allowedCafeIds.includes(cafeId)) {
-            throw ApiError.BadRequest('Access not granted');
-        }
+            const cafeRef = admin.firestore().collection('cafe').doc(cafeId);
+            const cafeSnapshot = await cafeRef.get();
+            if(!isSuperAdmin) {
+                const userRef = admin.firestore().collection('users').doc(uid);
+                const userSnapshot = await userRef.get();
+      
+                if (!cafeSnapshot.exists) {
+                    throw ApiError.BadRequest('Cafe not found.');
+                }
+        
+                const userData = userSnapshot.data();
+                if (!userSnapshot.exists) {
+                  throw ApiError.BadRequest('User not found.');
+              }
+           const getaccess = admin.firestore().collection('accessAdmin').doc(userData.email)
+              const getaccessDoc = await getaccess.get()
+              if (!getaccessDoc.exists) {
+                  throw ApiError.BadRequest('Access not granted');
+              }
+              const getaccessData = getaccessDoc.data()
+              const allowedCafeIds = getaccessData.allowedCafeIds || []; 
+      
+              if (!allowedCafeIds.includes(cafeId)) {
+                  throw ApiError.BadRequest('Access not granted');
+              }
+      
+            }
 
         if (typeof name !== 'string' || name.trim() === '' || name.length > 100) {
           throw ApiError.BadRequest('Cafe name must be a non-empty string and not exceed 100 characters.');
@@ -142,39 +139,35 @@ const getaccess = admin.firestore().collection('accessAdmin').doc(userData.email
     }
 
    
-  async updateDescription(uid, description, cafeId) {
+  async updateDescription(uid, description, cafeId, isSuperAdmin) {
     try {
-        const userRef = admin.firestore().collection('users').doc(uid);
-        const userSnapshot = await userRef.get();
-        
-        if (!userSnapshot.exists) {
-            throw ApiError.BadRequest('User not found.');
-        }
-
         const cafeRef = admin.firestore().collection('cafe').doc(cafeId);
         const cafeSnapshot = await cafeRef.get();
+        if(!isSuperAdmin) {
+            const userRef = admin.firestore().collection('users').doc(uid);
+            const userSnapshot = await userRef.get();
+  
+            if (!cafeSnapshot.exists) {
+                throw ApiError.BadRequest('Cafe not found.');
+            }
     
-        if (!cafeSnapshot.exists) {
-            throw ApiError.BadRequest('Cafe not found.');
+            const userData = userSnapshot.data();
+            if (!userSnapshot.exists) {
+              throw ApiError.BadRequest('User not found.');
+          }
+       const getaccess = admin.firestore().collection('accessAdmin').doc(userData.email)
+          const getaccessDoc = await getaccess.get()
+          if (!getaccessDoc.exists) {
+              throw ApiError.BadRequest('Access not granted');
+          }
+          const getaccessData = getaccessDoc.data()
+          const allowedCafeIds = getaccessData.allowedCafeIds || []; 
+  
+          if (!allowedCafeIds.includes(cafeId)) {
+              throw ApiError.BadRequest('Access not granted');
+          }
         }
 
-        const userData = userSnapshot.data();
-        
-        if (userData.privileges !== 'admin') {
-            throw ApiError.Forbidden('Access denied. Admin privileges required.');
-        }
-
-     const getaccess = admin.firestore().collection('accessAdmin').doc(userData.email)
-        const getaccessDoc = await getaccess.get()
-        if (!getaccessDoc.exists) {
-            throw ApiError.BadRequest('Access not granted');
-        }
-        const getaccessData = getaccessDoc.data()
-        const allowedCafeIds = getaccessData.allowedCafeIds || []; 
-
-        if (!allowedCafeIds.includes(cafeId)) {
-            throw ApiError.BadRequest('Access not granted');
-        }
 
         if (typeof description !== 'string' || description.trim() === '' || description.length > 500) {
           throw ApiError.BadRequest('Description must be a non-empty string and not exceed 500 characters.');
@@ -207,35 +200,37 @@ const getaccess = admin.firestore().collection('accessAdmin').doc(userData.email
 
 
     
-   async updateContacts(phone, email, website, socials, uid, cafeId) {
+   async updateContacts(phone, email, website, socials, uid, cafeId, isSuperAdmin) {
         try {
-          const userRef = admin.firestore().collection('users').doc(uid);
-          const userSnapshot = await userRef.get();
-          const cafeRef = admin.firestore().collection('cafe').doc(cafeId);
-          const cafeSnapshot = await cafeRef.get();
+            const cafeRef = admin.firestore().collection('cafe').doc(cafeId);
+            const cafeSnapshot = await cafeRef.get();
+            if(!isSuperAdmin) {
+                const userRef = admin.firestore().collection('users').doc(uid);
+                const userSnapshot = await userRef.get();
       
-          if (!cafeSnapshot.exists) {
-              throw ApiError.BadRequest('Cafe not found.');
-          }
-  
-          const userData = userSnapshot.data();
-          if (!userSnapshot.exists) {
-            throw ApiError.BadRequest('User not found.');
-        }
-          if (userData.privileges !== 'admin') {
-              throw ApiError.Forbidden('Access denied. Admin privileges required.');
-          }
-     const getaccess = admin.firestore().collection('accessAdmin').doc(userData.email)
-        const getaccessDoc = await getaccess.get()
-        if (!getaccessDoc.exists) {
-            throw ApiError.BadRequest('Access not granted');
-        }
-        const getaccessData = getaccessDoc.data()
-        const allowedCafeIds = getaccessData.allowedCafeIds || []; 
+                if (!cafeSnapshot.exists) {
+                    throw ApiError.BadRequest('Cafe not found.');
+                }
+        
+                const userData = userSnapshot.data();
+                if (!userSnapshot.exists) {
+                  throw ApiError.BadRequest('User not found.');
+              }
+           const getaccess = admin.firestore().collection('accessAdmin').doc(userData.email)
+              const getaccessDoc = await getaccess.get()
+              if (!getaccessDoc.exists) {
+                  throw ApiError.BadRequest('Access not granted');
+              }
+              const getaccessData = getaccessDoc.data()
+              const allowedCafeIds = getaccessData.allowedCafeIds || []; 
+      
+              if (!allowedCafeIds.includes(cafeId)) {
+                  throw ApiError.BadRequest('Access not granted');
+              }
+      
+            }
 
-        if (!allowedCafeIds.includes(cafeId)) {
-            throw ApiError.BadRequest('Access not granted');
-        }
+
           if (phone && typeof phone !== 'string') {
             throw ApiError.BadRequest('Phone must be a string.');
         }
@@ -249,17 +244,7 @@ const getaccess = admin.firestore().collection('accessAdmin').doc(userData.email
             throw ApiError.BadRequest('Socials must be an object (e.g., { instagram: "...", facebook: "..." }).');
         }
 
-        Object.keys(socials).forEach(social => {
-          const network = popularSocialNetworks.find(item => item.name === social);
-        
-          if (!network) {
-            throw ApiError.BadRequest(`Invalid or unrecognized social network: ${social}.`);
-          }
-        
-          if (!socials[social].startsWith(network.url)) {
-            throw ApiError.BadRequest(`Invalid URL for social network ${social}. Expected URL starting with ${network.url}, got ${socials[social]}.`);
-          }
-        });
+
 
       const contacts = {};
       if (phone) contacts.phone = phone;
@@ -292,33 +277,34 @@ const getaccess = admin.firestore().collection('accessAdmin').doc(userData.email
     }
 
   
-   async updateWorkingHours(uid, cafeId, workingHours) {
+   async updateWorkingHours(uid, cafeId, workingHours, isSuperAdmin) {
         try {
-          const userRef = admin.firestore().collection('users').doc(uid);
-          const userSnapshot = await userRef.get();
-          const cafeRef = admin.firestore().collection('cafe').doc(cafeId);
-          const cafeSnapshot = await cafeRef.get();
-          if (!cafeSnapshot.exists) {
-              throw ApiError.BadRequest('Cafe not found.');
+            const cafeRef = admin.firestore().collection('cafe').doc(cafeId);
+        const cafeSnapshot = await cafeRef.get();
+        if(!isSuperAdmin) {
+            const userRef = admin.firestore().collection('users').doc(uid);
+            const userSnapshot = await userRef.get();
+  
+            if (!cafeSnapshot.exists) {
+                throw ApiError.BadRequest('Cafe not found.');
+            }
+    
+            const userData = userSnapshot.data();
+            if (!userSnapshot.exists) {
+              throw ApiError.BadRequest('User not found.');
           }
-          const userData = userSnapshot.data();
-          if (!userSnapshot.exists) {
-            throw ApiError.BadRequest('User not found.');
-        }
-          if (userData.privileges !== 'admin') {
-              throw ApiError.Forbidden('Access denied. Admin privileges required.');
-          }
-          const getaccess = admin.firestore().collection('accessAdmin').doc(userData.email)
+       const getaccess = admin.firestore().collection('accessAdmin').doc(userData.email)
           const getaccessDoc = await getaccess.get()
           if (!getaccessDoc.exists) {
               throw ApiError.BadRequest('Access not granted');
-          }
+          }   
           const getaccessData = getaccessDoc.data()
           const allowedCafeIds = getaccessData.allowedCafeIds || []; 
   
           if (!allowedCafeIds.includes(cafeId)) {
               throw ApiError.BadRequest('Access not granted');
           }
+        }
           const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
           validDays.forEach(day => {
             const hours = workingHours[day];

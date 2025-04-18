@@ -1,7 +1,7 @@
 const ApiError = require('../error/ApiError');
 const validate = require('../utils/validate');
 const authService = require('./authService');
-
+const admin = require('firebase-admin');
 
 class authController {
 
@@ -59,7 +59,7 @@ async resetpasswordLink(req, res) {
     const { resetPasswordLink } = req.query;  
     console.log('resetPasswordLink:', resetPasswordLink);
     await authService.resetpasswordLink(resetPasswordLink);
-    return res.redirect(`https://www.youtube.com/`); 
+    return res.redirect(`http://localhost:3000/update-password`); 
   } catch (e) {
     if (e instanceof ApiError) {
       return res.status(e.status).json({ message: e.message, errors: e.errors });
@@ -67,6 +67,7 @@ async resetpasswordLink(req, res) {
     return res.status(500).json({ message: 'Internal server error. Please try again later.' });
   }
 }
+
 
 
 async resetPasswordFinal(req, res) {
@@ -80,6 +81,44 @@ async resetPasswordFinal(req, res) {
     }
     return res.status(500).json({ message: 'Internal server error. Please try again later.' });
   }
+}
+
+async checkAuth (req, res) {
+  try {
+    const token = req.headers.authorization.split(' ')[1]; 
+
+    if (!token) {
+      throw new ApiError(401, 'No token provided');
+    }
+    console.log('Authorization Header:', req.headers.authorization);
+
+  
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    
+    const uid = decodedToken.uid;
+    const userRef = admin.firestore().collection('users').doc(uid);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    const userData = userDoc.data();
+    const responseData = {
+      email: userData.email,
+      uid: userData.uid,
+      privileges: userData.privileges,
+      registrationMethod: userData.registrationMethod
+    };
+
+    return res.json(responseData); 
+} catch (e) {
+  console.log(e)
+  if (e instanceof ApiError) {
+    return res.status(e.status).json({ message: e.message, errors: e.errors });
+  }
+  return res.status(500).json({ message: 'Internal server error. Please try again later.' });
+}
 }
 
 }
