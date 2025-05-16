@@ -135,6 +135,44 @@ class dataService {
             throw ApiError.InternalError('Internal server error. Please try again later.');
         }
     }
+
+
+    async getAllNetworks (count, offset) {
+        try {
+            const db = admin.firestore();
+            let query = db.collection('networks');
+        
+            if (!isNaN(offset) && offset > 0) {
+                query = query.offset(offset);
+            }
+            if (!isNaN(count) && count > 0) {
+                query = query.limit(count);
+            }
+        
+   
+            const totalSnapshot = await db.collection('networks').get();
+            const totalRoasters = totalSnapshot.size;  
+        
+            const snapshot = await query.get();
+        
+            if (snapshot.empty) {
+                return { roasters: [], totalCount: totalRoasters }; 
+            }
+        
+            const roasters = [];
+            snapshot.forEach(doc => {
+                roasters.push({ id: doc.id, ...doc.data() });
+            });
+        
+            return { roasters, totalCount: totalRoasters }; 
+        } catch (e) {
+          
+            if (e instanceof ApiError) {
+                throw e;
+            }
+            throw ApiError.InternalError('Internal server error. Please try again later.');
+        }
+    }
     
 
 
@@ -329,10 +367,89 @@ class dataService {
 
 
     
+    async getNetworkByInput(networkName) {
+        try {
+          const coffeeSet = new Set();
+          const lowArch = networkName.charAt(0).toUpperCase() + networkName.slice(1);
+          const upperCase = networkName.charAt(0).toLowerCase() + networkName.slice(1);
+      
+          const coffeeRefFullWords = admin.firestore().collection('networks').where('name', '==', lowArch);
+          const coffeeRefFullWordsUpper = admin.firestore().collection('networks').where('name', '==', upperCase);
+      
+          const [snapshotLower, snapshotUpper] = await Promise.all([
+            coffeeRefFullWords.get(),
+            coffeeRefFullWordsUpper.get()
+          ]);
+      
+          snapshotLower.forEach(doc => coffeeSet.add(doc.id)); 
+          snapshotUpper.forEach(doc => coffeeSet.add(doc.id)); 
+      
+          const coffeeRefLower = admin.firestore().collection('networks')
+            .orderBy('name')
+            .startAt(upperCase)
+            .endAt(upperCase + '\uf8ff');
+      
+          const coffeeRefUpper = admin.firestore().collection('networks')
+            .orderBy('name')
+            .startAt(lowArch)
+            .endAt(lowArch + '\uf8ff');
+      
+          const [snapshotPartialLower, snapshotPartialUpper] = await Promise.all([
+            coffeeRefLower.get(),
+            coffeeRefUpper.get()
+          ]);
+      
+          snapshotPartialLower.forEach(doc => coffeeSet.add(doc.id)); 
+          snapshotPartialUpper.forEach(doc => coffeeSet.add(doc.id)); 
+      
+          const networks = [];
+          for (const networkId of coffeeSet) {
+            const networkDoc = await admin.firestore().collection('networks').doc(networkId).get();
+            if (networkDoc.exists) {
+              networks.push({ id: networkId, ...networkDoc.data() });
+            }
+          }
+      
+          return networks;
+      
+        } catch (e) {
+          console.log(e);
+          if (e instanceof ApiError) {
+            throw e;
+          }
+          throw ApiError.InternalError(e.message);
+        }
+      }
+      
 
     
+      async getModerationsBeans () {
+         try {
+       const moderBeansQuery = admin.firestore().collection('beans')
+      .where('isVerified', '==', false);
 
-    
+    const snapshot = await moderBeansQuery.get();
+
+    const beans = [];
+
+    snapshot.forEach(doc => {
+      beans.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+
+    return beans;
+         } catch (e) {
+          console.log(e);
+          if (e instanceof ApiError) {
+            throw e;
+          }
+          throw ApiError.InternalError(e.message);
+        }
+      }
+
+
     
 
 }

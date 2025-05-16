@@ -432,16 +432,6 @@ exports.createCoffeeChain = onRequest((req, res) => {
 
 
 
-exports.uploadImage = functions.https.onRequest((req, res) => {
-  cors(req, res, () => {
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
-    }
-
-    logger.info("Handling subscriptionsCreate request...", { structuredData: true });
-    return addController.uploadImage(req, res);
-  });
-});
 
 
 
@@ -559,6 +549,19 @@ exports.getAllCoffe  = functions.https.onRequest((req, res) => {
 
 
 
+exports.getAllNetworks  = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling getAllNetworks request...", { structuredData: true });
+    return dataController.getAllNetworks (req, res);
+  });
+});
+
+
+
 exports.validAccesAdmin = functions.https.onRequest((req, res) => {
   cors(req, res, () => {
     if (req.method !== "POST") {
@@ -569,4 +572,44 @@ exports.validAccesAdmin = functions.https.onRequest((req, res) => {
     return dataController.validAccesAdmin (req, res);
   });
 });
+
+
+exports.getNetworkByInput  = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling getNetworkByInput request...", { structuredData: true });
+    return dataController.getNetworkByInput (req, res);
+  });
+});
+
+
+
+exports.getModerationsBeans  = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "GET") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте GET" });
+    }
+
+    logger.info("Handling getModerationsBeans request...", { structuredData: true });
+    return dataController.getModerationsBeans (req, res);
+  });
+});
+
+exports.uploadImage = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling uploadImage request...", { structuredData: true });
+    return addController.uploadImage (req, res);
+  });
+});
+
+
+
+
 

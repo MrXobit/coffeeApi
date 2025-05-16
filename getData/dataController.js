@@ -109,6 +109,29 @@ async getAllCoffe(req, res) {
     }
 }
 
+async getAllNetworks(req, res) {
+    try {
+        let uid;
+        try {
+            uid = await getUidFromToken(req);
+            if (!uid) {
+                throw ApiError.BadRequest("Некорректный UID");
+            }
+        } catch (e) {
+            throw ApiError.BadRequest("Некорректный UID");
+        }       
+        const count = parseInt(req.query.count); 
+        const offset = parseInt(req.query.offset);
+        const NetData = await dataService.getAllNetworks(count, offset);
+        return res.json(NetData);
+    } catch(e) {
+        if (e instanceof ApiError) {
+            return res.status(e.status).json({ message: e.message, errors: e.errors });
+        }
+        return res.status(500).json({ message: 'Internal server error. Please try again later.' });
+    }
+}
+
 
 
 
@@ -193,6 +216,21 @@ async getCoffeByInput (req, res)  {
 }
 
 
+async getNetworkByInput (req, res)  {
+    try {
+     const {networkName} = req.body
+
+     const getNetworkByInputData = await dataService.getNetworkByInput(networkName);
+     return res.json(getNetworkByInputData);
+   } catch (e) {
+     console.log(e)
+       if (e instanceof ApiError) {
+           return res.status(e.status).json({ message: e.message, errors: e.errors });
+       }
+       return res.status(500).json({ message: 'Internal server error. Please try again later.' });
+   }
+}
+
 
 
  async validAccesAdmin (req, res) {
@@ -218,6 +256,20 @@ async getCoffeByInput (req, res)  {
           return res.json({ access: true });
       }
      } catch (e) {
+      console.log(e)
+        if (e instanceof ApiError) {
+            return res.status(e.status).json({ message: e.message, errors: e.errors });
+        }
+        return res.status(500).json({ message: 'Internal server error. Please try again later.' });
+    }
+}
+
+
+async getModerationsBeans (req, res) {
+    try {
+       const ModerationsBeansData = await dataService.getModerationsBeans()
+      return res.json(ModerationsBeansData);
+    } catch(e) {
       console.log(e)
         if (e instanceof ApiError) {
             return res.status(e.status).json({ message: e.message, errors: e.errors });

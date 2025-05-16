@@ -7,7 +7,8 @@ const path = require("path");
 const os = require("os");
 const fs = require("fs");
 const { getUidFromToken } = require('../utils/auth-utils');
-
+const { default: axios } = require('axios');
+const { finished } = require('stream/promises');
 
 
 class AddController { 
@@ -107,18 +108,97 @@ class AddController {
 
 
 
-    
+async uploadImage(req, res) {
+  try {
+    // let uid;
+    // try {
+    //   uid = await getUidFromToken(req);
+    //   if (!uid) {
+    //     throw ApiError.BadRequest("Некорректный UID");
+    //   }
+    // } catch (e) {
+    //   throw ApiError.BadRequest("Некорректный UID");
+    // }
+
+    // const userDoc = await admin.firestore().collection('users').doc(uid).get();
+    // if (!userDoc.exists) {
+    //   throw ApiError.BadRequest("Користувача не знайдено");
+    // }
+
+    // const userData = userDoc.data();
+    // if (userData.privileges !== 'superAdmin') {
+    //   throw ApiError.Forbidden("Access forbidden: you are not a super admin");
+    // }
+
+    const cafeData = req.body.cafeData;
+    if (!cafeData) {
+      throw ApiError.BadRequest('Missing cafeData in body');
+    }
+
+    const remoteConfig = admin.remoteConfig();
+    const template = await remoteConfig.getTemplate();
+    const apiKey = template.parameters['API_KEY_MAP']?.defaultValue?.value;
+
+    if (!apiKey) {
+      throw ApiError.BadRequest('API_KEY is not set in Remote Config');
+    }
+
+    const cafeRef = admin.firestore().collection('cafe').doc(cafeData.place_id);
+    const cafeSnapshot = await cafeRef.get();
+
+    if (cafeSnapshot.exists) {
+      throw ApiError.BadRequest('Cafe already exists');
+    }
+
+    const cafe = { adminData: {}, ...cafeData };
+    await cafeRef.set(cafe);
+
+    const photoReference = cafeData.photos?.[0]?.photo_reference;
+    if (!photoReference) {
+      throw ApiError.BadRequest('Photo reference is missing');
+    }
+
+    const url = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${apiKey}`;
+    const response = await axios.get(url, { responseType: 'stream', maxRedirects: 5 });
+
+    const bucket = admin.storage().bucket();
+    const file = bucket.file(`cafe/${cafeData.place_id}/photos/cafe`);
+    const writeStream = file.createWriteStream({
+      metadata: {
+        contentType: response.headers['content-type'],
+      },
+    });
+
+    response.data.pipe(writeStream);
+    await finished(writeStream); 
+
+    await file.makePublic();
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
+
+    await cafeRef.update({
+      'adminData.photos.cafePhoto': publicUrl,
+    });
+
+    return res.status(200).json({
+      message: 'Cafe added and image uploaded successfully',
+      photoUrl: publicUrl,
+    });
+
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return res.status(error.status).json({ message: error.message, errors: error.errors });
+    }
+
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+
+
 
 }
 
 module.exports = new AddController();
-
-
-
-
-
-
-
 
 
 
