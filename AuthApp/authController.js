@@ -59,7 +59,7 @@ async resetpasswordLink(req, res) {
     const { resetPasswordLink } = req.query;  
     console.log('resetPasswordLink:', resetPasswordLink);
     await authService.resetpasswordLink(resetPasswordLink);
-    return res.redirect(`http://localhost:3000/update-password`); 
+    return res.redirect(`https://coffee-bee.web.app/update-password`); 
   } catch (e) {
     if (e instanceof ApiError) {
       return res.status(e.status).json({ message: e.message, errors: e.errors });

@@ -110,30 +110,59 @@ class AddController {
 
 async uploadImage(req, res) {
   try {
-    // let uid;
-    // try {
-    //   uid = await getUidFromToken(req);
-    //   if (!uid) {
-    //     throw ApiError.BadRequest("Некорректный UID");
-    //   }
-    // } catch (e) {
-    //   throw ApiError.BadRequest("Некорректный UID");
-    // }
+    let uid;
+    try {
+      uid = await getUidFromToken(req);
+      if (!uid) {
+        throw ApiError.BadRequest("Некорректный UID");
+      }
+    } catch (e) {
+      throw ApiError.BadRequest("Некорректный UID");
+    }
 
-    // const userDoc = await admin.firestore().collection('users').doc(uid).get();
-    // if (!userDoc.exists) {
-    //   throw ApiError.BadRequest("Користувача не знайдено");
-    // }
+    const userDoc = await admin.firestore().collection('users').doc(uid).get();
+    if (!userDoc.exists) {
+      throw ApiError.BadRequest("Користувача не знайдено");
+    }
 
-    // const userData = userDoc.data();
-    // if (userData.privileges !== 'superAdmin') {
-    //   throw ApiError.Forbidden("Access forbidden: you are not a super admin");
-    // }
+    const userData = userDoc.data();
+    if (userData.privileges !== 'superAdmin') {
+      throw ApiError.Forbidden("Access forbidden: you are not a super admin");
+    }
 
     const cafeData = req.body.cafeData;
     if (!cafeData) {
       throw ApiError.BadRequest('Missing cafeData in body');
     }
+
+
+const fieldsArray = [
+  "adr_address",
+  "business_status",
+  "icon",
+  "icon_background_color",
+  "icon_mask_base_uri",
+  "formatted_phone_number",
+  "international_phone_number",
+  "delivery",
+  "current_opening_hours",
+  "photos",
+  "reviews",
+  "serves_beer",
+  "serves_breakfast",
+  "serves_brunch",
+  "serves_lunch",
+  "serves_vegetarian_food",
+  "serves_wine",
+  "types",
+  "user_ratings_total",
+  "dine_in",
+  "reservable"
+];
+
+const cleanedCafeData = Object.fromEntries(
+  Object.entries(cafeData).filter(([key]) => !fieldsArray.includes(key))
+);
 
     const remoteConfig = admin.remoteConfig();
     const template = await remoteConfig.getTemplate();
@@ -150,7 +179,7 @@ async uploadImage(req, res) {
       throw ApiError.BadRequest('Cafe already exists');
     }
 
-    const cafe = { adminData: {}, ...cafeData };
+    const cafe = { adminData: {}, ...cleanedCafeData };
     await cafeRef.set(cafe);
 
     const photoReference = cafeData.photos?.[0]?.photo_reference;

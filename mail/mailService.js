@@ -6,7 +6,7 @@ class MailService {
         this.transporter = null;
     }
 
-    // Асинхронно ініціалізуємо транспортер
+    
     async initialize() {
         try {
             const remoteConfig = admin.remoteConfig();
@@ -18,7 +18,7 @@ class MailService {
                 port: 587,
                 secure: false,
                 auth: {
-                    user: 'coffeeapimail@gmail.com',
+                    user: 'cbee.info@gmail.com',
                     pass: smpt,
                 },
             });
@@ -36,19 +36,20 @@ class MailService {
 
         try {
             await this.transporter.sendMail({
-                from: 'coffeeapimail@gmail.com',
+                from: 'cbee.info@gmail.com',
                 to,
-                subject: 'Account Activation',
+               subject: 'Reset your password - Coffee Bee',
                 html: `
-                    <div style="font-family: Arial, sans-serif; text-align: center; background-color: #f9f9f9; padding: 20px; border-radius: 10px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
-                        <h1 style="color: #4CAF50;">Welcome to our website!</h1>
-                        <p style="font-size: 16px; color: #555;">To complete your registration, please click the link below:</p>
-                        <a href="${link}" style="display: inline-block; margin: 20px auto; padding: 10px 20px; font-size: 18px; color: #fff; background-color: #4CAF50; text-decoration: none; border-radius: 5px;">Activate Account</a>
-                        <p style="font-size: 14px; color: #888;">If you did not register on our website, please ignore this email.</p>
-                        <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-                        <p style="font-size: 12px; color: #aaa;">© 2025 Your Website. All rights reserved.</p>
-                    </div>
-                `,
+                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fefefe; padding: 30px; max-width: 600px; margin: 0 auto; border-radius: 16px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); text-align: center;">
+                    <h1 style="color: #ff9f43; margin-bottom: 10px;">☕ Coffee Bee</h1>
+                    <h2 style="color: #333; margin-bottom: 20px;">Reset your password</h2>
+                    <p style="font-size: 16px; color: #444;">You requested to reset your password. Click the button below to create a new one and get back to enjoying your coffee moments.</p>
+                    <a href="${link}" style="display: inline-block; margin-top: 25px; padding: 14px 32px; background-color: #ff9f43; color: #fff; font-size: 16px; border-radius: 10px; text-decoration: none; font-weight: 600; transition: background 0.3s ease;">Reset Password</a>
+                    <p style="font-size: 14px; color: #999; margin-top: 30px;">Didn't request this? Just ignore this message, and nothing will change.</p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 40px 0;">
+                    <p style="font-size: 12px; color: #bbb;">© 2025 Coffee Bee. All rights reserved.</p>
+                </div>
+            `,
             });
         } catch (error) {
             console.error('Error while sending email:', error);
