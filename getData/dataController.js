@@ -200,11 +200,28 @@ async getRoasterByInput (req, res)  {
 }
 
 
-async getCoffeByInput (req, res)  {
-    try {
-     const {coffeName} = req.body
+// async getCoffeByInput (req, res)  {
+//     try {
+//      const {coffeName, country} = req.body
 
-     const getCoffeByInputData = await dataService.getCoffeeByInput(coffeName);
+//      const getCoffeByInputData = await dataService.getCoffeeByInput(coffeName, country);
+//      return res.json(getCoffeByInputData);
+//    } catch (e) {
+//      console.log(e)
+//        if (e instanceof ApiError) {
+//            return res.status(e.status).json({ message: e.message, errors: e.errors });
+//        }
+//        return res.status(500).json({ message: 'Internal server error. Please try again later.' });
+//    }
+// }
+
+
+
+async searchCafes (req, res)  {
+    try {
+     const {coffeName, country} = req.body
+
+     const getCoffeByInputData = await dataService.searchCafes(coffeName, country);
      return res.json(getCoffeByInputData);
    } catch (e) {
      console.log(e)
@@ -216,9 +233,11 @@ async getCoffeByInput (req, res)  {
 }
 
 
+
 async getNetworkByInput (req, res)  {
     try {
      const {networkName} = req.body
+    
 
      const getNetworkByInputData = await dataService.getNetworkByInput(networkName);
      return res.json(getNetworkByInputData);
@@ -276,6 +295,51 @@ async getModerationsBeans (req, res) {
         }
         return res.status(500).json({ message: 'Internal server error. Please try again later.' });
     }
+}
+
+
+async getCafesByCountry (req, res) {
+    try {
+       
+        let uid;
+        try {
+            uid = await getUidFromToken(req);
+            if (!uid) {
+                throw ApiError.BadRequest("Некорректный UID");
+            }
+        } catch (e) {
+            throw ApiError.BadRequest("Некорректный UID");
+        }
+
+        const userDoc = await admin.firestore().collection('users').doc(uid).get();
+        if (!userDoc.exists) {
+          throw ApiError.BadRequest("Користувача не знайдено");
+        }
+        
+        const userData = userDoc.data();
+        let isSuperAdmin = false
+        isSuperAdmin = userData.privileges === 'superAdmin';
+        if (!isSuperAdmin) {
+            throw ApiError.Forbidden("Недостатньо прав доступу");
+        }
+
+        const { country, limitCount, offset } = req.body;
+        if (!country) {
+            throw ApiError.BadRequest("Поле 'country' є обов'язковим для пошуку кафе.");
+          }
+          
+        const getCafes = await dataService.getCafesByCountry(country, limitCount, offset)
+               
+        return res.status(200).json(getCafes);
+
+
+    } catch(e) {
+        console.log(e)
+          if (e instanceof ApiError) {
+              return res.status(e.status).json({ message: e.message, errors: e.errors });
+          }
+          return res.status(500).json({ message: 'Internal server error. Please try again later.' });
+      }
 }
 
 

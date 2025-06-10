@@ -511,16 +511,6 @@ exports.getRoasterByInput  = functions.https.onRequest((req, res) => {
 });
 
 
-exports.getCoffeByInput  = functions.https.onRequest((req, res) => {
-  cors(req, res, () => {
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
-    }
-
-    logger.info("Handling getCoffeByInput request...", { structuredData: true });
-    return dataController.getCoffeByInput (req, res);
-  });
-});
 
 
 
@@ -611,5 +601,38 @@ exports.uploadImage = functions.https.onRequest((req, res) => {
 
 
 
+exports.getCafesByCountry  = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
 
+    logger.info("Handling getCafesByCountry request...", { structuredData: true });
+    return dataController.getCafesByCountry (req, res);
+  });
+});
+
+
+// exports.getCoffeByInputdfsfdfsdfs2  = functions.https.onRequest((req, res) => {
+//   cors(req, res, () => {
+//     if (req.method !== "POST") {
+//       return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+//     }
+
+//     logger.info("Handling getCoffeByInput request...", { structuredData: true });
+//     return dataController.getCoffeByInput (req, res);
+//   });
+// });
+
+
+exports.searchCafes  = functions.https.onRequest((req, res) => {
+  cors(req, res, () => {
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Метод не дозволений, використовуйте POST" });
+    }
+
+    logger.info("Handling getCoffeByInput request...", { structuredData: true });
+    return dataController.searchCafes (req, res);
+  });
+});
 

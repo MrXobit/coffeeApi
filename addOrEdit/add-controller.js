@@ -160,6 +160,20 @@ const fieldsArray = [
   "reservable"
 ];
 
+
+
+
+const cityObj = cafeData.address_components.find(c => c.types.includes("locality"));
+const countryObj = cafeData.address_components.find(c => c.types.includes("country"));
+
+const city = cityObj ? cityObj.long_name : null;
+const country = countryObj ? countryObj.long_name : null;
+
+
+
+
+
+
 const cleanedCafeData = Object.fromEntries(
   Object.entries(cafeData).filter(([key]) => !fieldsArray.includes(key))
 );
@@ -179,7 +193,12 @@ const cleanedCafeData = Object.fromEntries(
       throw ApiError.BadRequest('Cafe already exists');
     }
 
-    const cafe = { adminData: {}, ...cleanedCafeData };
+    const cafe = {
+      adminData: {},
+      ...cleanedCafeData,
+      city,    
+      country, 
+    };
     await cafeRef.set(cafe);
 
     const photoReference = cafeData.photos?.[0]?.photo_reference;

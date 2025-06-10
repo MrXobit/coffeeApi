@@ -1,8 +1,7 @@
 const { default: axios } = require('axios');
 const admin = require('firebase-admin');
 const ApiError = require('../error/ApiError');
-
-
+const { FieldPath } = require('firebase-admin/firestore');
 
 
 class dataService { 
@@ -137,44 +136,41 @@ class dataService {
     }
 
 
-    async getAllNetworks (count, offset) {
+    async getAllNetworks(count, offset) {
         try {
-            const db = admin.firestore();
-            let query = db.collection('networks');
-        
-            if (!isNaN(offset) && offset > 0) {
-                query = query.offset(offset);
-            }
-            if (!isNaN(count) && count > 0) {
-                query = query.limit(count);
-            }
-        
-   
-            const totalSnapshot = await db.collection('networks').get();
-            const totalRoasters = totalSnapshot.size;  
-        
-            const snapshot = await query.get();
-        
-            if (snapshot.empty) {
-                return { roasters: [], totalCount: totalRoasters }; 
-            }
-        
-            const roasters = [];
-            snapshot.forEach(doc => {
-                roasters.push({ id: doc.id, ...doc.data() });
-            });
-        
-            return { roasters, totalCount: totalRoasters }; 
+          const db = admin.firestore();
+          let query = db.collection('coffeeChain');
+      
+          if (!isNaN(offset) && offset > 0) {
+            query = query.offset(offset);
+          }
+          if (!isNaN(count) && count > 0) {
+            query = query.limit(count);
+          }
+      
+          const totalSnapshot = await db.collection('coffeeChain').get();
+          const totalRoasters = totalSnapshot.size;
+      
+          const snapshot = await query.get();
+      
+          if (snapshot.empty) {
+            return { roasters: [], totalCount: totalRoasters };
+          }
+      
+          const roasters = [];
+          snapshot.forEach(doc => {
+            roasters.push({ id: doc.id, ...doc.data() });
+          });
+      
+          return { roasters, totalCount: totalRoasters };
         } catch (e) {
-          
-            if (e instanceof ApiError) {
-                throw e;
-            }
-            throw ApiError.InternalError('Internal server error. Please try again later.');
+          if (e instanceof ApiError) {
+            throw e;
+          }
+          throw ApiError.InternalError('Internal server error. Please try again later.');
         }
-    }
-    
-
+      }
+      
 
 
     async getAllUsersCoffeeLogs() {
@@ -309,61 +305,191 @@ class dataService {
 
 
     
+    // async getCoffeeByInput(coffeeName, country) {
+    //     try {
+    //         if (!coffeeName) {
+    //             throw ApiError.BadRequest('Coffee name is required');
+    //         }
+    
+    //         const coffeeSet = new Set();
+    
+    //         const nameLower = coffeeName.charAt(0).toLowerCase() + coffeeName.slice(1);
+    //         const nameUpper = coffeeName.charAt(0).toUpperCase() + coffeeName.slice(1);
+    
+    //         const cafeCollection = admin.firestore().collection('cafe');
+    
+    //         const matchQueries = [];
+    
+    //         // Повний збіг
+    //         if (country) {
+    //             matchQueries.push(
+    //                 cafeCollection.where('name', '==', nameLower).where('country', '==', country).get(),
+    //                 cafeCollection.where('name', '==', nameUpper).where('country', '==', country).get()
+    //             );
+    //         } else {
+    //             matchQueries.push(
+    //                 cafeCollection.where('name', '==', nameLower).get(),
+    //                 cafeCollection.where('name', '==', nameUpper).get()
+    //             );
+    //         }
+    
+    //         const [fullMatchLowerSnap, fullMatchUpperSnap] = await Promise.all(matchQueries);
+    
+    //         fullMatchLowerSnap.forEach(doc => coffeeSet.add(doc.id));
+    //         fullMatchUpperSnap.forEach(doc => coffeeSet.add(doc.id));
+    
+    //         // Частковий збіг
+    //         const partialMatchQueries = [];
+    
+    //         if (country) {
+    //             partialMatchQueries.push(
+    //                 cafeCollection
+    //                     .where('country', '==', country)
+    //                     .orderBy('name')
+    //                     .startAt(nameLower)
+    //                     .endAt(nameLower + '\uf8ff')
+    //                     .get(),
+    
+    //                 cafeCollection
+    //                     .where('country', '==', country)
+    //                     .orderBy('name')
+    //                     .startAt(nameUpper)
+    //                     .endAt(nameUpper + '\uf8ff')
+    //                     .get()
+    //             );
+    //         } else {
+    //             partialMatchQueries.push(
+    //                 cafeCollection
+    //                     .orderBy('name')
+    //                     .startAt(nameLower)
+    //                     .endAt(nameLower + '\uf8ff')
+    //                     .get(),
+    
+    //                 cafeCollection
+    //                     .orderBy('name')
+    //                     .startAt(nameUpper)
+    //                     .endAt(nameUpper + '\uf8ff')
+    //                     .get()
+    //             );
+    //         }
+    
+    //         const [partialMatchLowerSnap, partialMatchUpperSnap] = await Promise.all(partialMatchQueries);
+    
+    //         partialMatchLowerSnap.forEach(doc => coffeeSet.add(doc.id));
+    //         partialMatchUpperSnap.forEach(doc => coffeeSet.add(doc.id));
+    
+    //         // Завантажити документи
+    //         const coffees = [];
+    //         for (const id of coffeeSet) {
+    //             const doc = await cafeCollection.doc(id).get();
+    //             if (doc.exists) {
+    //                 coffees.push({ id: doc.id, ...doc.data() });
+    //             }
+    //         }
+    
+    //         return coffees;
+    
+    //     } catch (e) {
+    //         console.error(e);
+    //         if (e instanceof ApiError) throw e;
+    //         throw ApiError.InternalError(e.message);
+    //     }
+    // }
 
-    async getCoffeeByInput(coffeeName) {
+   
+    
+
+        async searchCafes(coffeeName, country) {
         try {
+            if (!coffeeName) {
+                throw ApiError.BadRequest('Coffee name is required');
+            }
+    
             const coffeeSet = new Set();
-            const lowArch = coffeeName.charAt(0).toUpperCase() + coffeeName.slice(1);
-            const upperCase = coffeeName.charAt(0).toLowerCase() + coffeeName.slice(1);
     
-            const coffeeRefFullWords = admin.firestore().collection('cafe').where('name', '==', lowArch);
-            const coffeeRefFullWordsUpper = admin.firestore().collection('cafe').where('name', '==', upperCase);
+            const nameLower = coffeeName.charAt(0).toLowerCase() + coffeeName.slice(1);
+            const nameUpper = coffeeName.charAt(0).toUpperCase() + coffeeName.slice(1);
     
-            const [snapshotLower, snapshotUpper] = await Promise.all([
-                coffeeRefFullWords.get(),
-                coffeeRefFullWordsUpper.get()
-            ]);
+            const cafeCollection = admin.firestore().collection('cafe');
     
-            snapshotLower.forEach(doc => coffeeSet.add(doc.id)); 
-            snapshotUpper.forEach(doc => coffeeSet.add(doc.id)); 
+            const matchQueries = [];
     
-            const coffeeRefLower = admin.firestore().collection('cafe')
-                .orderBy('name')
-                .startAt(upperCase)
-                .endAt(upperCase + '\uf8ff');
+            // Повний збіг
+            if (country) {
+                matchQueries.push(
+                    cafeCollection.where('name', '==', nameLower).where('country', '==', country).get(),
+                    cafeCollection.where('name', '==', nameUpper).where('country', '==', country).get()
+                );
+            } else {
+                matchQueries.push(
+                    cafeCollection.where('name', '==', nameLower).get(),
+                    cafeCollection.where('name', '==', nameUpper).get()
+                );
+            }
     
-            const coffeeRefUpper = admin.firestore().collection('cafe')
-                .orderBy('name')
-                .startAt(lowArch)
-                .endAt(lowArch + '\uf8ff');
+            const [fullMatchLowerSnap, fullMatchUpperSnap] = await Promise.all(matchQueries);
     
-            const [snapshotPartialLower, snapshotPartialUpper] = await Promise.all([
-                coffeeRefLower.get(),
-                coffeeRefUpper.get()
-            ]);
+            fullMatchLowerSnap.forEach(doc => coffeeSet.add(doc.id));
+            fullMatchUpperSnap.forEach(doc => coffeeSet.add(doc.id));
     
-            snapshotPartialLower.forEach(doc => coffeeSet.add(doc.id)); 
-            snapshotPartialUpper.forEach(doc => coffeeSet.add(doc.id)); 
+            // Частковий збіг
+            const partialMatchQueries = [];
     
+            if (country) {
+                partialMatchQueries.push(
+                    cafeCollection
+                        .where('country', '==', country)
+                        .orderBy('name')
+                        .startAt(nameLower)
+                        .endAt(nameLower + '\uf8ff')
+                        .get(),
+    
+                    cafeCollection
+                        .where('country', '==', country)
+                        .orderBy('name')
+                        .startAt(nameUpper)
+                        .endAt(nameUpper + '\uf8ff')
+                        .get()
+                );
+            } else {
+                partialMatchQueries.push(
+                    cafeCollection
+                        .orderBy('name')
+                        .startAt(nameLower)
+                        .endAt(nameLower + '\uf8ff')
+                        .get(),
+    
+                    cafeCollection
+                        .orderBy('name')
+                        .startAt(nameUpper)
+                        .endAt(nameUpper + '\uf8ff')
+                        .get()
+                );
+            }
+    
+            const [partialMatchLowerSnap, partialMatchUpperSnap] = await Promise.all(partialMatchQueries);
+    
+            partialMatchLowerSnap.forEach(doc => coffeeSet.add(doc.id));
+            partialMatchUpperSnap.forEach(doc => coffeeSet.add(doc.id));
+    
+            // Завантажити документи
             const coffees = [];
-            for (const coffeeId of coffeeSet) {
-                const coffeeDoc = await admin.firestore().collection('cafe').doc(coffeeId).get();
-                if (coffeeDoc.exists) {
-                    coffees.push({ id: coffeeId, ...coffeeDoc.data() });
+            for (const id of coffeeSet) {
+                const doc = await cafeCollection.doc(id).get();
+                if (doc.exists) {
+                    coffees.push({ id: doc.id, ...doc.data() });
                 }
             }
     
             return coffees;
     
         } catch (e) {
-            console.log(e);
-            if (e instanceof ApiError) {
-                throw e;
-            }
+            console.error(e);
+            if (e instanceof ApiError) throw e;
             throw ApiError.InternalError(e.message);
         }
     }
-    
+
 
 
     
@@ -373,8 +499,8 @@ class dataService {
           const lowArch = networkName.charAt(0).toUpperCase() + networkName.slice(1);
           const upperCase = networkName.charAt(0).toLowerCase() + networkName.slice(1);
       
-          const coffeeRefFullWords = admin.firestore().collection('networks').where('name', '==', lowArch);
-          const coffeeRefFullWordsUpper = admin.firestore().collection('networks').where('name', '==', upperCase);
+          const coffeeRefFullWords = admin.firestore().collection('coffeeChain').where('name', '==', lowArch);
+          const coffeeRefFullWordsUpper = admin.firestore().collection('coffeeChain').where('name', '==', upperCase);
       
           const [snapshotLower, snapshotUpper] = await Promise.all([
             coffeeRefFullWords.get(),
@@ -384,12 +510,12 @@ class dataService {
           snapshotLower.forEach(doc => coffeeSet.add(doc.id)); 
           snapshotUpper.forEach(doc => coffeeSet.add(doc.id)); 
       
-          const coffeeRefLower = admin.firestore().collection('networks')
+          const coffeeRefLower = admin.firestore().collection('coffeeChain')
             .orderBy('name')
             .startAt(upperCase)
             .endAt(upperCase + '\uf8ff');
       
-          const coffeeRefUpper = admin.firestore().collection('networks')
+          const coffeeRefUpper = admin.firestore().collection('coffeeChain')
             .orderBy('name')
             .startAt(lowArch)
             .endAt(lowArch + '\uf8ff');
@@ -404,7 +530,7 @@ class dataService {
       
           const networks = [];
           for (const networkId of coffeeSet) {
-            const networkDoc = await admin.firestore().collection('networks').doc(networkId).get();
+            const networkDoc = await admin.firestore().collection('coffeeChain').doc(networkId).get();
             if (networkDoc.exists) {
               networks.push({ id: networkId, ...networkDoc.data() });
             }
@@ -450,7 +576,46 @@ class dataService {
       }
 
 
-    
+
+      async getCafesByCountry(country, limitCount, offset) {
+        try {
+          const cafeCollection = admin.firestore().collection('cafe').where('country', '==', country);
+          limitCount = limitCount || 10
+       
+          const docIdField = FieldPath.documentId();
+
+          let query = cafeCollection.orderBy(docIdField).limit(limitCount);
+      
+          if (offset > 0) {
+            const offsetSnapshot = await cafeCollection.orderBy(docIdField).limit(offset).get();
+      
+            if (!offsetSnapshot.empty) {
+              const lastDoc = offsetSnapshot.docs[offsetSnapshot.docs.length - 1];
+              query = query.startAfter(lastDoc);
+            }
+          }
+      
+          const snapshot = await query.get();
+      
+          const cafes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+         
+          const countAggregate = await cafeCollection.count().get();
+          const totalCount = countAggregate.data().count;
+          return {
+            cafes,
+            totalCount,
+          };
+        } catch (e) {
+          console.error('[getCafesByCountry] ❌ Error:', e);
+          if (e instanceof ApiError) {
+            throw e;
+          }
+          throw ApiError.InternalError(e.message);
+        }
+      }
+      
+      
 
 }
 
